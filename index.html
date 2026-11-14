@@ -1095,14 +1095,14 @@ function srQuick(list,start){
   const tt=document.getElementById('tote');
   if(tt&&r&&r.width&&fxOn('fly')){const rt=tt.getBoundingClientRect(),vis=rt.bottom>0&&rt.top<innerHeight;if(!vis)tt.scrollIntoView({block:'center',behavior:'smooth'});setTimeout(()=>fly({getBoundingClientRect:()=>r},src),vis?30:520)}
   toast('به ساک اضافه شد')}
- function paint(sway){const p=list[ci],t=++tok,imgs=[p.rackImage,...(p.images||[])].filter((v,k,a)=>v&&a.indexOf(v)===k).slice(0,5),src=imgs[ii]||imgs[0]||'';
+ function paint(sway){const p=list[ci],t=++tok,imgs=[p.rackImage,...(p.images||[])].filter((v,k,a)=>v&&a.indexOf(v)===k).slice(0,4),src=imgs[ii]||imgs[0]||'';
   const im=h('img',{class:'ld',alt:p.title}),g=h('div',{class:'sq-g'},h('i',{class:'sr-w'}),im);
   st.replaceChildren(g);
   if(src)srCutC(src).then(u=>{if(t!==tok)return;im.src=u;im.classList.remove('ld')});else im.classList.remove('ld');
   if(sway&&g.animate)g.animate([{rotate:'0deg'},{rotate:'8deg',offset:.25},{rotate:'-4deg',offset:.55},{rotate:'1.5deg',offset:.8},{rotate:'0deg'}],{duration:1100,easing:'ease-out'});
   {const pid0=p.productId||(!p.customRack?p.id:'');ab.hidden=!(pid0&&prod(pid0))}nm.textContent=p.title;ds.textContent=p.desc||'';ds.hidden=!p.desc;
   pr.replaceChildren(h('s',{},fa(p.oldPrice)),h('b',{},fa(p.price)+' '+S.store.currency),h('i',{},fa(disc(p))+'٪'));
-  tabs.replaceChildren(...(imgs.length>1?imgs.map((_,k)=>h('button',{type:'button','aria-pressed':String(k===ii),onclick:()=>{ii=k;paint(true)}},k===0?'روبه‌رو':k===1?'پشت':'نمای '+fa(k+1))):[]))}
+  tabs.replaceChildren(...(imgs.length>1?imgs.map((_,k)=>h('button',{type:'button','aria-pressed':String(k===ii),onclick:()=>{ii=k;paint(true)}},['روبه‌رو','پشت','نمای بغل','جزئیات'][k]||('نمای '+fa(k+1)))):[]))}
  ov.append(h('button',{class:'sq-x',type:'button',onclick:close},'بستن'),
   h('button',{class:'sq-n p',type:'button','aria-label':'قبلی',onclick:()=>step(-1)},'→'),h('button',{class:'sq-n n',type:'button','aria-label':'بعدی',onclick:()=>step(1)},'←'),
   st,nm,ds,pr,tabs,ab,h('button',{class:'sq-go alt',type:'button',onclick:()=>{const id=list[ci].productId||(!list[ci].customRack?list[ci].id:'');close();if(id)openProduct(id)}},list[ci].productId||!list[ci].customRack?'مشاهده و خرید':'بستن'));
