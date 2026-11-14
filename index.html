@@ -1398,8 +1398,8 @@ const chTmp=m=>String(m.id).startsWith('tmp');
 const chSha=async s=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return ''}};
 function chTok(u){if(!u.ctok){u.ctok=uid()+uid()+uid()+uid();persist()}return u.ctok}
 async function chPickImage(f){if(!f)return '';if(!/^image\//.test(f.type)||f.type==='image/svg+xml'){toast('فقط فایل عکس مجاز است');return ''}return readFile(f,{max:1000,q:.78})}
-async function chUpload(dataUrl){const blob=await (await fetch(dataUrl)).blob(),path=Date.now().toString(36)+Math.random().toString(36).slice(2,8)+'.jpg';
- await sbFetch('/storage/v1/object/chat/'+path,{method:'POST',raw:true,body:blob,headers:{'Content-Type':'image/jpeg'},timeout:60000});return SB.url+'/storage/v1/object/public/chat/'+path}
+async function chUpload(dataUrl){const blob=await (await fetch(dataUrl)).blob(),mime=blob.type||'image/jpeg',ext=mime==='image/png'?'png':mime==='image/webp'?'webp':mime==='image/gif'?'gif':'jpg',path=Date.now().toString(36)+Math.random().toString(36).slice(2,8)+'.'+ext;
+ await sbFetch('/storage/v1/object/chat/'+path,{method:'POST',raw:true,body:blob,headers:{'Content-Type':mime},timeout:60000});return SB.url+'/storage/v1/object/public/chat/'+path}
 async function chLoad(first){if(CH.busy)return false;CH.busy=true;let changed=false;
  try{
   if(first||!CH.msgs.some(m=>!chTmp(m))){
@@ -1868,8 +1868,8 @@ chat(){let rows=[],err='',pimg='',editId=null;const box=h('div',{class:'lst'});
     editId===c.id?null:h('div',{class:'row'},CH_V2?h('button',{class:'btn sec',onclick:()=>startRep(c)},I('comment',16),'پاسخ'):null,isSt?null:h('button',{class:'btn sec',onclick:()=>{editId=c.id;draw()}},I('edit',16),'ویرایش'),h('button',{class:'btn dg',onclick:e=>delRow(c,e.currentTarget)},I('trash',16),'حذف پیام')))}):h('div',{class:'empty'},'هنوز پیامی ثبت نشده است.'))};
  const load=()=>sbFetch('/rest/v1/chat_messages?select='+chCols()+'&order=id.desc&limit=200',{auth:true}).then(r=>{rows=r||[];err='';draw()}).catch(e=>{if(CH_V2&&chV2Err(e)){CH_V2=false;return load()}err=e.message;draw()});
  const post=async()=>{const t=inp.value.trim();if(!t&&!pimg)return toast('متن یا عکسی بنویسید');
-  try{let url=null;if(pimg)url=await chUpload(pimg);const lg=S.store.adminAvatar||S.store.logo,adminName=(S.store.adminName||'').trim()||S.store.name||'ادمین';
-   await sbFetch('/rest/v1/chat_messages',{method:'POST',auth:true,headers:{Prefer:'return=minimal'},body:Object.assign({uid:'admin',name:adminName,avatar:(lg&&/^https?:/.test(lg)&&lg.length<400)?lg:null,text:t,image:url,is_admin:true},CH_V2&&rep?{reply_to:rep.id,rname:rep.name,rtext:rqSnip(rep)}:{})});
+  try{let url=null;if(pimg)url=await chUpload(pimg);const lg=S.store.adminAvatar||S.store.logo,avatar=(lg&&/^https?:/.test(lg))?lg:(lg&&/^data:image\//.test(lg)?await chUpload(lg):null),adminName=(S.store.adminName||'').trim()||S.store.name||'ادمین';
+   await sbFetch('/rest/v1/chat_messages',{method:'POST',auth:true,headers:{Prefer:'return=minimal'},body:Object.assign({uid:'admin',name:adminName,avatar:avatar,text:t,image:url,is_admin:true},CH_V2&&rep?{reply_to:rep.id,rname:rep.name,rtext:rqSnip(rep)}:{})});
    inp.value='';pimg='';drawPv();rep=null;drawRp();toast('پیام ارسال شد');load()}catch(e){toast('ارسال نشد: '+e.message)}};
  box.append(h('div',{class:'empty'},'در حال بارگیری…'));load();
  return[card('ارسال پیام به‌عنوان ادمین',h('p',{},'پیام شما با برچسب «ادمین» و ظاهر متفاوت در گفتگوی همگانی نمایش داده می‌شود.'),rp,inp,pv,h('div',{class:'row'},h('span',{class:'btn sec up'},I('image',18),'افزودن عکس',file),h('button',{class:'btn',onclick:post},I('comment',18),'ارسال'))),
@@ -1879,8 +1879,8 @@ comments(){let rows=[],v2=true,noCol=false,editId=null,repId=null;const box=h('d
  const fail=e=>toast(e.message||'خطا');
  const saveEdit=(c,v)=>{const tx=v.trim().slice(0,300);if(!tx)return toast('متن نمی‌تواند خالی باشد');
   sbFetch('/rest/v1/story_comments?id=eq.'+enc(c.id)+'&select=id',{method:'PATCH',auth:true,headers:{Prefer:'return=representation'},body:{text:tx,edited:true}}).then(r=>{if(Array.isArray(r)&&!r.length)return toast('اجازه ویرایش ندارید');c.text=tx;c.edited=true;editId=null;CM.t=0;draw();toast('ذخیره شد')}).catch(er=>toast('ذخیره نشد: '+er.message))};
- const sendRep=(c,v)=>{const tx=v.trim().slice(0,300);if(!tx)return toast('متن پاسخ را بنویسید');const lg=S.store.adminAvatar||S.store.logo,adminName=(S.store.adminName||'').trim()||S.store.name||'ادمین';
-  sbFetch('/rest/v1/story_comments',{method:'POST',auth:true,headers:{Prefer:'return=minimal'},body:Object.assign({story_id:c.story_id,name:adminName,text:tx,uid:'admin',is_admin:true},reply_to:String(c.id),rname:c.name,rtext:rqSnip(c)},(lg&&/^https?:/.test(lg)&&lg.length<400)?{avatar:lg}:{})}).then(()=>{repId=null;CM.t=0;toast('پاسخ ارسال شد');load()}).catch(er=>toast('ارسال نشد: '+er.message))};
+ const sendRep=(c,v)=>{const tx=v.trim().slice(0,300);if(!tx)return toast('متن پاسخ را بنویسید');const lg=S.store.adminAvatar||S.store.logo,avatar=(lg&&/^https?:/.test(lg))?lg:(lg&&/^data:image\//.test(lg)?await chUpload(lg):null),adminName=(S.store.adminName||'').trim()||S.store.name||'ادمین';
+  sbFetch('/rest/v1/story_comments',{method:'POST',auth:true,headers:{Prefer:'return=minimal'},body:Object.assign({story_id:c.story_id,name:adminName,text:tx,uid:'admin',is_admin:true},reply_to:String(c.id),rname:c.name,rtext:rqSnip(c)},avatar?{avatar}:{})}).then(()=>{repId=null;CM.t=0;toast('پاسخ ارسال شد');load()}).catch(er=>toast('ارسال نشد: '+er.message))};
  const delRow=(c,b)=>{if(!b.dataset.s){b.dataset.s=1;b.textContent='برای حذف دوباره بزنید';return}
   sbFetch('/rest/v1/story_comments?id=eq.'+enc(c.id)+'&select=id',{method:'DELETE',auth:true,headers:{Prefer:'return=representation'}}).then(r=>{if(Array.isArray(r)&&!r.length)return toast('اجازه حذف ندارید');rows=rows.filter(x=>x!==c);CM.t=0;draw();toast('حذف شد')}).catch(er=>toast('حذف نشد: '+er.message))};
  const draw=()=>{box.innerHTML='';
