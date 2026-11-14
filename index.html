@@ -1146,7 +1146,7 @@ function liveSway(row){
  row.addEventListener('pointerleave',()=>{px=null})}
 
 function saleRail(){
- const R=S.rack||{},hasCustomImages=Array.isArray(R.items)&&R.items.some(x=>x&&x.image),custom=hasCustomImages?R.items.filter(x=>x.active!==false&&x.image).map(x=>({id:x.id,productId:x.productId,title:x.title,desc:x.desc,price:+x.price||0,oldPrice:+x.oldPrice||0,rackImage:x.image,images:[x.image,x.backImage].filter(Boolean),label:x.label,customRack:true})):null;
+ const R=S.rack||{},hasCustomImages=Array.isArray(R.items)&&R.items.some(x=>x&&x.image),custom=hasCustomImages?R.items.filter(x=>x.active!==false&&x.image).map(x=>({id:x.id,productId:x.productId,title:x.title,desc:x.desc,price:+x.price||0,oldPrice:+x.oldPrice||0,rackImage:x.image,images:[x.backImage,x.sideImage,x.detailImage].filter(Boolean),label:x.label,customRack:true})):null;
  const list=(custom||S.products.filter(p=>p.featured!==false&&disc(p)>0&&(p.rackImage||(p.images&&p.images[0]))).sort((a,b)=>disc(b)-disc(a))).slice(0,Math.min(10,Math.max(3,+R.limit||10)));
  if(!list.length)return null;
  let moved=false,down=null,hot=null,lastX=0;
@@ -1700,7 +1700,7 @@ rack(){
  if(!R.items.some(x=>x&&x.image)){
   const starter=S.products.filter(p=>p.featured!==false&&disc(p)>0&&(p.rackImage||(p.images&&p.images[0]))).sort((a,b)=>disc(b)-disc(a)).slice(0,Math.min(10,Math.max(3,+R.limit||10)));
   if(starter.length){
-   R.items=[...R.items,...starter.map(p=>({id:uid(),title:p.title||'کیف منتخب',desc:p.desc||p.description||'',price:+p.price||0,oldPrice:+p.oldPrice||0,discount:disc(p),image:p.rackImage||(p.images&&p.images[0])||'',backImage:(p.images&&p.images[1])||'',active:true,productId:p.id||'',label:p.label||''}))];
+   R.items=[...R.items,...starter.map(p=>({id:uid(),title:p.title||'کیف منتخب',desc:p.desc||p.description||'',price:+p.price||0,oldPrice:+p.oldPrice||0,discount:disc(p),image:p.rackImage||(p.images&&p.images[0])||'',backImage:(p.images&&p.images[1])||'',sideImage:(p.images&&p.images[2])||'',detailImage:(p.images&&p.images[3])||'',active:true,productId:p.id||'',label:p.label||''}))];
    commit();
   }
  }
@@ -1712,8 +1712,10 @@ rack(){
   g2(fld('درصد تخفیف (قیمت قبل از تخفیف خودکار محاسبه می‌شود)',pctF(it)),tog(it,'active','نمایش در رگال')),
   fld('عکس اصلی کیف · پس‌زمینه شفاف پیشنهاد می‌شود',imgField(it,'image',{max:2200,q:.94,clearable:true,alpha:true})),
   fld('عکس پشت کیف (اختیاری)',imgField(it,'backImage',{max:2200,q:.94,clearable:true,alpha:true})),
+  fld('عکس نمای بغل کیف (اختیاری)',imgField(it,'sideImage',{max:2200,q:.94,clearable:true,alpha:true})),
+  fld('عکس جزئیات کیف (اختیاری)',imgField(it,'detailImage',{max:2200,q:.94,clearable:true,alpha:true})),
   fld('متن دکمه/برچسب (اختیاری)',tx(it,'label'))
- ],()=>({id:uid(),title:'کیف جدید',desc:'',price:0,oldPrice:0,discount:0,image:'',backImage:'',active:true,productId:'',label:''}),
+ ],()=>({id:uid(),title:'کیف جدید',desc:'',price:0,oldPrice:0,discount:0,image:'',backImage:'',sideImage:'',detailImage:'',active:true,productId:'',label:''}),
  {title:it=>it.title||'کیف بدون نام',addLabel:'افزودن کیف به رگال',thumb:it=>it.image||'',collapse:true,editAction:true});
  return[
   card('مدیریت مستقل رگال',h('p',{},'کیف‌های این بخش مستقل از گالری محصولات مدیریت می‌شوند. عکس، نوشته و قیمت هر کیف را همین‌جا وارد کنید. برای اتصال دکمه خرید به صفحه محصول، محصول مرتبط را انتخاب کنید؛ در غیر این صورت کیف فقط در رگال و پیش‌نمایش نمایش داده می‌شود.'),
