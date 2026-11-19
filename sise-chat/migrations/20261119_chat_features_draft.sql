@@ -97,7 +97,7 @@ begin
     select 1 from public.chat_messages
     where uid = p_uid and tokh = v_hash and is_admin = false
   ) then
-    return 0;
+    return -1;
   end if;
   insert into public.chat_reads(message_id, uid)
   select distinct m.id, p_uid
