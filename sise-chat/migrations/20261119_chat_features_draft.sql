@@ -38,7 +38,7 @@ grant select on public.chat_reactions to anon, authenticated;
 grant select on public.chat_reads to anon, authenticated;
 
 create or replace function public.chat_react(p_id bigint, p_uid text, p_tok text, p_emoji text)
-returns boolean
+returns text
 language plpgsql
 security definer
 set search_path = pg_catalog, public
@@ -49,17 +49,17 @@ begin
   if p_id is null or p_uid is null or length(p_uid) not between 1 and 128
      or p_tok is null or length(p_tok) not between 16 and 256
      or p_emoji not in ('❤️','😂','😍','👍','🔥','👏','😢','🎉') then
-    return false;
+    return 'invalid';
   end if;
   v_hash := encode(sha256(convert_to(p_tok, 'UTF8')), 'hex');
   if not exists (
     select 1 from public.chat_messages
     where uid = p_uid and tokh = v_hash and is_admin = false
   ) then
-    return false;
+    return 'invalid';
   end if;
   if not exists (select 1 from public.chat_messages where id = p_id) then
-    return false;
+    return 'invalid';
   end if;
   if exists (
     select 1 from public.chat_reactions
@@ -67,14 +67,14 @@ begin
   ) then
     delete from public.chat_reactions
     where message_id = p_id and uid = p_uid and emoji = p_emoji;
-    return false;
+    return 'removed';
   end if;
   insert into public.chat_reactions(message_id, uid, emoji)
   values (p_id, p_uid, p_emoji)
   on conflict (message_id, uid, emoji) do nothing;
-  return true;
+  return 'added';
 end;
-$$;
+$;
 
 create or replace function public.chat_mark_read(p_ids bigint[], p_uid text, p_tok text)
 returns integer
