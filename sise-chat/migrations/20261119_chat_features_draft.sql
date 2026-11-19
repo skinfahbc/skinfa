@@ -48,7 +48,7 @@ declare
 begin
   if p_id is null or p_uid is null or length(p_uid) not between 1 and 128
      or p_tok is null or length(p_tok) not between 16 and 256
-     or p_emoji not in ('❤️','😂','😍','👍','🔥','👏','😢','🎉') then
+     or p_emoji is null or p_emoji not in ('❤️','😂','😍','👍','🔥','👏','😢','🎉') then
     return 'invalid';
   end if;
   v_hash := encode(sha256(convert_to(p_tok, 'UTF8')), 'hex');
@@ -90,7 +90,7 @@ begin
      or p_tok is null or length(p_tok) not between 16 and 256
      or p_ids is null or coalesce(array_length(p_ids, 1), 0) = 0
      or array_length(p_ids, 1) > 100 then
-    return 0;
+    return -1;
   end if;
   v_hash := encode(sha256(convert_to(p_tok, 'UTF8')), 'hex');
   if not exists (
