@@ -74,7 +74,7 @@ begin
   on conflict (message_id, uid, emoji) do nothing;
   return 'added';
 end;
-$;
+$$;
 
 create or replace function public.chat_mark_read(p_ids bigint[], p_uid text, p_tok text)
 returns integer
